@@ -27,8 +27,8 @@ def explosion_color(progress):
 
 
 def on_city_destroyed(city):
-    """Called when a city is hit; add screen shake, sounds, or a game-over warning here."""
-    pass
+    """Show a short warning when a city is destroyed."""
+    city.game.city_destroyed_message = 1.5
 
 
 def city_repair_threshold():
@@ -106,6 +106,9 @@ class Game:
         self.cities = [City(x) for x in xs]
         self.score, self.wave, self.state = 0, 1, "play"
         self.repairs_awarded = 0
+        self.city_destroyed_message = 0.0
+        for city in self.cities:
+            city.game = self
         self.start_wave()
 
     def start_wave(self):
@@ -155,6 +158,11 @@ class Game:
     def update(self, dt):
         if self.state != "play":
             return
+
+        if self.city_destroyed_message > 0:
+            self.city_destroyed_message = max(
+                0.0, self.city_destroyed_message - dt
+            )
 
         threshold = city_repair_threshold()
         if threshold and self.score // threshold > self.repairs_awarded:
@@ -336,6 +344,17 @@ class Game:
         )
 
         screen.blit(hud, (10, 8))
+
+        if self.city_destroyed_message > 0:
+            warning = self.font.render(
+                "CITY DESTROYED!",
+                True,
+                (255, 80, 80)
+            )
+            screen.blit(
+                warning,
+                warning.get_rect(center=(WIDTH // 2, 45))
+            )
 
         if self.state == "lose":
             label = self.font.render(
